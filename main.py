@@ -1,6 +1,6 @@
 # MIT License
 # 
-# Copyright (c) 2022-Present Prem-ium
+# Copyright (c) 2022 Prem-ium
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -44,12 +44,11 @@ try:
 except ImportError:
     os.system("pip install pytz")
     from pytz                                 import timezone
-finally:
-    from pytz                                 import UnknownTimeZoneError
 
 # Load ENV
 load_dotenv()
-
+# LOGIN EXAMPLE:
+# "EMAIL:PASSWORD,EMAIL:PASSWORD"
 if not os.environ["LOGIN"]:
     raise Exception("LOGIN not set. Please enter your login information in .env variable 'LOGIN' in the following format: 'EMAIL:PASSWORD,EMAIL2:PASSWORD2,EMAIL3:PASSWORD3'")
 else:
@@ -57,7 +56,7 @@ else:
 
 # Check number of accounts (limit to 6 per IP address to avoid bans)
 if (len(ACCOUNTS) > 6):
-    raise Exception(f"You can only have 6 accounts per IP address. Using more increases your chances of being banned by Microsoft Rewards. You have {len(ACCOUNTS)} accounts within your LOGIN env variable. Please adjust it to have 6 or less accounts and restart the program.")
+    raise Exception(f"You can only have 5 accounts per IP address. Using more increases your chances of being banned by Microsoft Rewards. You have {len(ACCOUNTS)} accounts within your LOGIN env variable. Please adjust it to have 5 or less accounts and restart the program.")
 
 # Set login URL
 if not os.environ["URL"]:
@@ -71,10 +70,7 @@ TERMS = ["define ", "explain ", "example of ", "how to pronounce ", "what is ", 
          "what is the antonym of ", "what is the hypernym of ", "what is the meronym of ", "photos of ",
          "images of ", "pictures of ", "pictures of ", "pictures of ", "pictures of ", "pictures of ", "pictures of ",
          "information about ", "information on ", "information about the ", "information on the ", "information about the ",
-         "synonym of ", "antonym of ", "hypernym of ", "meronym of ", "synonym for ", "antonym for ", "hypernym for ",
-         "meronym for ", "pronunciation of ", "pronounce ", "how to pronounce ", "how to say ", "how to say the ",
-         "interesting facts about ", "interesting facts on ", "interesting facts about the ", "interesting facts on the ",
-]
+         "synonym of ", "antonym of ", "hypernym of ", "meronym of ", "synonym for ", "antonym for ", "hypernym for "]
 
 # Optional Variables
 # Import bot name from .env
@@ -109,7 +105,7 @@ if (HANDLE_DRIVER == "true"):
         from selenium.webdriver.edge.service                          import Service
     elif BROWSER == "firefox":
         from webdriver_manager.firefox                                import GeckoDriverManager
-        from selenium.webdriver.firefox.service                       import Service 
+        from selenium.webdriver.firefox.options                       import Options
 else:
     HANDLE_DRIVER = False
 
@@ -130,11 +126,6 @@ if (os.environ.get("AUTOMATE_PUNCHCARD", "false").lower() == "true"):
     AUTOMATE_PUNCHCARD = True
 else:
     AUTOMATE_PUNCHCARD = False
-
-if (os.environ.get("SKIP_MOVIES_AND_TV_PUNCHCARD", "false").lower() == "true"):
-    SKIP_MOVIES_AND_TV_PUNCHCARD = True
-else:
-    SKIP_MOVIES_AND_TV_PUNCHCARD = False
 
 if (os.environ.get("SHOPPING", "false").lower() == "true"):
     SHOPPING = True
@@ -176,12 +167,8 @@ PROXY = os.environ.get("PROXY", "")
 # Populate proxy dictionary for requests
 PROXIES = {"http": f"{PROXY}", "https": f"{PROXY}"}
 
-try:
-    # Configure timezone
-    TZ = timezone(os.environ.get("TZ", "America/New_York"))
-except UnknownTimeZoneError:
-    print("Invalid timezone specified in .env, defaulting to America/New_York. Please check https://en.wikipedia.org/wiki/List_of_tz_database_time_zones for a list of valid timezones.")
-    TZ = timezone("America/New_York")
+# Configure timezone
+TZ = timezone(os.environ.get("TZ", "America/New_York"))
 
 # Whether or not to use a timer, and if so, what time to use
 TIMER = os.environ.get("TIMER", "False").lower()
@@ -238,61 +225,61 @@ def apprise_init():
             alerts.add(service)
         return alerts
           
-def get_current_ip(type, proxies):
-    try:
-        return ((requests.get(f"https://ip{type}.icanhazip.com", proxies=proxies)).text).strip("\n")
-    except requests.ConnectionError:
-        print(f"Unable to get IP{type} address")
-        if type == "v4":
-            # Send message to console and apprise alert if configured
-            print(f"Failed to connect to icanhazip.com over {type}. Is there a problem with your network?")
-            if APPRISE_ALERTS:
-                alerts.notify(title=f"Failed to connect to icanhazip.com over {type}",
-                    body=f"Is there a problem with your network?")
-            # Wait some time (to prevent Docker containers from constantly restarting)
-            sleep(300)
-            raise Exception(f"Failed to connect to icanhazip.com over {type}. Is there a problem with your network?")
-        if type == "v6":
-            # We can just fail softly if this error occurs with v6. Note that a ConnectionError is raised if a v4-only host tries to connect to a v6 site
-            # We can make this fail hard once v6 is actually widely available....
-            return None
-    except Exception as e:
-        # Catch all other errors.
-        print(f"An exception occurred while trying to get your current IP address: {e}")
-        if APPRISE_ALERTS:
-            alerts.notify(title=f"An exception occurred while trying to get your current IP address",
-                body=f"{e}")
-        # Wait some time (to prevent Docker containers from constantly restarting)
-        sleep(60)
-        raise Exception
+# def get_current_ip(type, proxies):
+#     try:
+#         return ((requests.get(f"https://ip{type}.icanhazip.com", proxies=proxies)).text).strip("\n")
+#     except requests.ConnectionError:
+#         print(f"Unable to get IP{type} address")
+#         if type == "v4":
+#             # Send message to console and apprise alert if configured
+#             print(f"Failed to connect to icanhazip.com over {type}. Is there a problem with your network?")
+#             if APPRISE_ALERTS:
+#                 alerts.notify(title=f"Failed to connect to icanhazip.com over {type}",
+#                     body=f"Is there a problem with your network?")
+#             # Wait some time (to prevent Docker containers from constantly restarting)
+#             sleep(300)
+#             raise Exception(f"Failed to connect to icanhazip.com over {type}. Is there a problem with your network?")
+#         if type == "v6":
+#             # We can just fail softly if this error occurs with v6. Note that a ConnectionError is raised if a v4-only host tries to connect to a v6 site
+#             # We can make this fail hard once v6 is actually widely available....
+#             return None
+#     except Exception as e:
+#         # Catch all other errors.
+#         print(f"An exception occurred while trying to get your current IP address: {e}")
+#         if APPRISE_ALERTS:
+#             alerts.notify(title=f"An exception occurred while trying to get your current IP address",
+#                 body=f"{e}")
+#         # Wait some time (to prevent Docker containers from constantly restarting)
+#         sleep(60)
+#         raise Exception
 
-def check_ip_address():
-    # Compares desired IP address with actual external IP address
-    current_ipv4 = get_current_ip("v4", PROXIES)
-    print(f"Current IPv4 Address: {current_ipv4}")
-    current_ipv6 = get_current_ip("v6", PROXIES)
-    if current_ipv6:
-        print(f"Current IPv6 Address: {current_ipv6}")
-    # If declared in .env, check the IPv4 address
-    if WANTED_IPV4:
-        if WANTED_IPV4 != current_ipv4:
-            print(f"IPv4 addresses do not match. Wanted {WANTED_IPV4} but got {current_ipv4}")
-            if APPRISE_ALERTS:
-                alerts.notify(title=f'IPv4 Address Mismatch',body=f'Wanted {WANTED_IPV4} but got {current_ipv4}')
-            raise Exception(f"IPv4 addresses do not match. Wanted {WANTED_IPV4} but got {current_ipv4}")
-        else:
-            print("IPv4 addresses match!")
-    # If declared in .env, check the IPv6 address
-    if WANTED_IPV6 and current_ipv6:
-        if WANTED_IPV6 != current_ipv6:
-            print(f"IPv6 addresses do not match. Wanted {WANTED_IPV6} but got {current_ipv6}")
-            if APPRISE_ALERTS:
-                alerts.notify(title=f'IPv6 Address Mismatch', 
-                    body=f'Wanted {WANTED_IPV6} but got {current_ipv6}')
-            raise Exception(f"IPv6 addresses do not match. Wanted {WANTED_IPV6} but got {current_ipv6}")
-        else:
-            print("IPv6 addresses match!")
-    print()
+# def check_ip_address():
+#     # Compares desired IP address with actual external IP address
+#     current_ipv4 = get_current_ip("v4", PROXIES)
+#     print(f"Current IPv4 Address: {current_ipv4}")
+#     current_ipv6 = get_current_ip("v6", PROXIES)
+#     if current_ipv6:
+#         print(f"Current IPv6 Address: {current_ipv6}")
+#     # If declared in .env, check the IPv4 address
+#     if WANTED_IPV4:
+#         if WANTED_IPV4 != current_ipv4:
+#             print(f"IPv4 addresses do not match. Wanted {WANTED_IPV4} but got {current_ipv4}")
+#             if APPRISE_ALERTS:
+#                 alerts.notify(title=f'IPv4 Address Mismatch',body=f'Wanted {WANTED_IPV4} but got {current_ipv4}')
+#             raise Exception(f"IPv4 addresses do not match. Wanted {WANTED_IPV4} but got {current_ipv4}")
+#         else:
+#             print("IPv4 addresses match!")
+#     # If declared in .env, check the IPv6 address
+#     if WANTED_IPV6 and current_ipv6:
+#         if WANTED_IPV6 != current_ipv6:
+#             print(f"IPv6 addresses do not match. Wanted {WANTED_IPV6} but got {current_ipv6}")
+#             if APPRISE_ALERTS:
+#                 alerts.notify(title=f'IPv6 Address Mismatch', 
+#                     body=f'Wanted {WANTED_IPV6} but got {current_ipv6}')
+#             raise Exception(f"IPv6 addresses do not match. Wanted {WANTED_IPV6} but got {current_ipv6}")
+#         else:
+#             print("IPv6 addresses match!")
+#     print()
 
 def get_driver(isMobile = False):
     if BROWSER == "chrome":
@@ -306,7 +293,10 @@ def get_driver(isMobile = False):
         options = webdriver.FirefoxOptions()
 
     if HEADLESS:
-        options.add_argument("--headless")
+        if BROWSER == "chrome" or BROWSER == "edge":
+            options.add_argument("--headless")
+        elif BROWSER == "firefox":
+            options.headless = True
 
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
@@ -406,8 +396,18 @@ def login(EMAIL, PASSWORD, driver):
             password_field.send_keys(PASSWORD)
             password_field.send_keys(Keys.ENTER)
         except:
-            print(f'Unable to find password field for account {EMAIL}')
-            return False
+            try:
+                password_field = driver.find_element(By.XPATH, value='//*[@id="idRemoteNGC_DisplaySign"]')
+                print(password_field)
+                if password_field is not None:
+                    print(f'Using 2FA waiting for approval')
+                    sleep(30)
+                    print(f'Done ')
+                    return True
+            except:
+                print(f'Unable to find password field for account {EMAIL}')
+                sleep(45)
+                return True
     sleep(random.uniform(3, 6))
     try:
         message = driver.find_element(By.XPATH, value='//*[@id="passwordError"]').text
@@ -558,46 +558,38 @@ def do_quiz(driver):
             if driver.find_elements(By.XPATH, value='//*[@id="rqHeaderCredits"]'):
                 # get the number of sections in the quiz
                 sections = len(driver.find_element(By.XPATH, value='//*[@id="rqHeaderCredits"]').find_elements(By.XPATH, value='*'))
-                # Identify if this is a Warp Speed Quiz or not
-                is_warpspeed_quiz = len(driver.find_elements(By.XPATH, value='//div[@id="currentQuestionContainer"]/div[@class="textBasedMultiChoice"]/div[@class="rq_button"]')) > 0
 
-                if is_warpspeed_quiz == True:
-                    do_warpspeed_quiz(driver, sections)
-                else:
-                    # loop through each section
-                    for i in range(sections):
-                        try:
-                            # get the number of choices in the current section
-                            choices = len(driver.find_elements(By.XPATH, value='//div[@class="b_cards" && @class="btcc"]'))
-                            # loop through each choice
-                            for i in range(choices):
-                                # wait 5 seconds
-                                sleep(5)
-                                # get a correct answer option
-                                option = driver.find_elements(By.XPATH, value='//div[@class="b_cards" && @class="btcc"]')[i]
-                                # click the option
-                                option.click()
-                                # wait 10 seconds
-                                sleep(10)
-                                try:
-                                    # if the answer was incorrect, choose another option
-                                    while driver.find_element(By.XPATH, value='//*[@id="rqAnsStatus"]').text.lower() == 'oops, try again!':
-                                        option = driver.find_element(By.XPATH, value=f'//*[@id="rqAnswerOption{random.randint(0, choices - 1)}"]')
-                                        option.click()
-                                        sleep(5)
-                                except Exception as e:
-                                    print("Quiz failed.")
-                                    if(DEBUGGING):
-                                        print(e)
-                                    pass
-                                # if the quiz is complete, exit the loop
-                                if "great job - you just earned" in driver.find_element(By.XPATH, value='//*[@id="quizCompleteContainer"]/div/div[1]').text.lower():
+                # loop through each section
+                for i in range(sections):
+                    try:
+                        # get the number of choices in the current section
+                        choices = len(driver.find_element(By.CLASS_NAME, value='rqCredits').find_elements(By.XPATH, value='*'))
+                        # loop through each choice
+                        for i in range(choices * 2):
+                            # wait 5 seconds
+                            sleep(5)
+                            # get a random answer option
+                            option = driver.find_element(By.XPATH, value=f'//*[@id="rqAnswerOption{random.randint(0, choices - 1)}"]')
+                            # click the option
+                            option.click()
+                            # wait 10 seconds
+                            sleep(10)
+                            try:
+                                # if the answer was incorrect, choose another option
+                                while driver.find_element(By.XPATH, value='//*[@id="rqAnsStatus"]').text.lower() == 'oops, try again!':
+                                    option = driver.find_element(By.XPATH, value=f'//*[@id="rqAnswerOption{random.randint(0, choices - 1)}"]')
+                                    option.click()
                                     sleep(5)
-                                    break
-                            print('\tQuiz completed!')
-                            return
-                        except:
-                            pass
+                            except:
+                                pass
+                            # if the quiz is complete, exit the loop
+                            if "great job - you just earned" in driver.find_element(By.XPATH, value='//*[@id="quizCompleteContainer"]/div/div[1]').text.lower():
+                                sleep(5)
+                                break
+                        print('\tQuiz completed!')
+                        return
+                    except:
+                        pass
                 # if the quiz does not have credits sections
                 for i in range(sections):
                     try:
@@ -635,35 +627,11 @@ def do_quiz(driver):
                 return
         except Exception as e:
             if DEBUGGING:
-                print(traceback.format_exc())
+                print(e)
             else:
                 print('\tQuiz failed!')
             pass
-
-def do_warpspeed_quiz(driver, sections):
-    for i in range(sections):
-        try:
-            # get the number of choices in the current section
-            choices = len(driver.find_elements(By.XPATH, value='//*[contains(@class, "rqOption")]'))
-            # loop through each choice
-            for j in range(choices):
-                # wait 5 seconds
-                sleep(5)
-                # pick options one by one
-                option = driver.find_element(By.XPATH, value=f'//*[@id="rqAnswerOption{j}"]')
-                # click the option
-                option.click()
-                # wait 10 seconds
-                sleep(10)
-                # look for incorrect choices; If none were found after click(s), it means we moved on to the next quiz or the quizzes are done
-                if len(driver.find_elements(By.CLASS_NAME, value='rqwrongAns')) == 0:
-                    break
-        except Exception:
-            if DEBUGGING:
-                print(traceback.format_exc())
-            pass
-    return
-
+        
 def assume_task(driver, p="false"):
     try:
         # get the parent window handle
@@ -707,10 +675,7 @@ def complete_punchcard(driver):
         sleep(5)
 
         # get all the clickable quest links on the page
-        if (SKIP_MOVIES_AND_TV_PUNCHCARD):
-            quests = driver.find_elements(By.XPATH, '//*[contains(@class, "clickable-link") and not(contains(@href, "MoviesandTV"))]')
-        else:
-            quests = driver.find_elements(By.CLASS_NAME, value='clickable-link')
+        quests = driver.find_elements(By.CLASS_NAME, value='clickable-link')
         # create a list of the links
         links = []
         for quest in quests:
@@ -844,7 +809,7 @@ def daily_set(driver):
     except Exception as e:
         driver.get('https://rewards.microsoft.com/')
         if DEBUGGING:
-            print(traceback.format_exc())
+            print(e)
         else:
             print("Error: Could not complete daily set activity 1")
         pass
@@ -1020,7 +985,7 @@ def redeem(driver, EMAIL):
         if APPRISE_ALERTS:
             alerts.notify(title=f'{BOT_NAME}: Redeem Error', body=f'An error occured trying to auto-redeem for: {EMAIL}\n\n{traceback.format_exc()}\n\n...')
         if DEBUGGING:
-            print(traceback.format_exc())
+            print(e)
         else:
             print("Ran into an exception trying to redeem\n")
         return f"\tRan into an exception trying to redeem\n{traceback.format_exc()}\n"
@@ -1081,7 +1046,7 @@ def get_points(EMAIL, PASSWORD, driver):
     except Exception as e:
         driver.get('https://rewards.microsoft.com/')
         if DEBUGGING:
-            print(traceback.format_exc())
+            print(e)
         else:
             print("Ran into an exception trying to login and getting your points\n")
         pass
@@ -1152,7 +1117,7 @@ def pc_search(driver, EMAIL, PASSWORD, PC_SEARCHES):
         ping.send_keys(value)
 
         # add delay to prevent ban
-        sleep(4)
+        sleep(5)
         try:
             go = driver.find_element(By.ID, value="sb_form_go")
             go.click()
@@ -1213,8 +1178,7 @@ def mobile_search(driver, EMAIL, PASSWORD, MOBILE_SEARCHES):
     driver.get('https://www.bing.com/')
     
     # Main search loop
-    # Attempt (MOBILE_SEARCHES+1) searches to make sure the mobile_search finishes completely
-    for x in range(1, MOBILE_SEARCHES + 2):
+    for x in range(1, MOBILE_SEARCHES + 1):
         if DELAY_SEARCH:
             sleep(DELAY_SEARCH)
         else:
@@ -1512,7 +1476,7 @@ def main():
                 # Run Bing Rewards Automation
                 start_rewards()
             hours = random.randint(3, 8)
-            print(f'Bing Rewards Automation Complete!\n{datetime.datetime.now(TZ)}\n\n------------------------------------------------------------\n\nIf you like this project, please consider showing support to the developer!\nGitHub Profile:\t\t\t\thttps://github.com/Prem-ium\nGitHub Sponsor Donations (No fees):\thttps://github.com/sponsors/Prem-ium\nBuy-Me-A-Coffee Donations:\thttps://www.buymeacoffee.com/prem.ium\n\n------------------------------------------------------------\n\nSleeping for {hours} hours before restarting Bing Rewards Automation.\nThank you for supporting Prem-ium\'s Github Repository!\n\n------------------------------------------------------------\n')
+            print(f'Bing Rewards Automation Complete!\n{datetime.datetime.now(TZ)}\n\n------------------------------------------------------------\n\nIf you like this project, please consider showing support to the developer!\nGitHub Profile:\t\t\t\thttps://github.com/Prem-ium\nBuy-Me-A-Coffee Donations:\thttps://www.buymeacoffee.com/prem.ium\n\n------------------------------------------------------------\n\nSleeping for {hours} hours before restarting Bing Rewards Automation.\nThank you for supporting Prem-ium\'s Github Repository!\n\n------------------------------------------------------------\n')
             sleep(3600 * hours)
         except Exception as e:
             # Catch any errors, print them, and restart (in hopes of it being non-fatal)
@@ -1529,5 +1493,5 @@ if __name__ == "__main__":
         alerts = apprise_init()
 
     # Run checks on IP address & start main function, if all is good
-    check_ip_address()
+    # check_ip_address()
     main()
